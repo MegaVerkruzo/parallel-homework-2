@@ -70,7 +70,7 @@ vector<vector<int>> seq(const vector<vector<int>>& gr, int n, int z, int y, int 
 
         result.push_back(next);
     }
-    cout << "layers amount: " << result.size() << '\n';
+    // cout << "layers amount: " << result.size() << '\n';
 
     return result;
 }
@@ -102,9 +102,10 @@ vector<vector<int>> parallel(const vector<vector<int>>& gr, int n, int z, int y,
         vector<int> all_neighbours(sum_offsets);
 
         parlay::parallel_for(0, cur.size(), [& gr, & offsets, & all_neighbours, & cur] (size_t i) {
-            size_t all_i = offsets[i];
-            parlay::parallel_for(0, gr[cur[i]].size(), [ & gr, & all_i, & all_neighbours, & i, &cur] (size_t j) {
-                all_neighbours[all_i + j] = gr[cur[i]][j];
+            auto all_it = all_neighbours.begin() + offsets[i];
+            auto loc_it = gr[cur[i]].begin();
+            parlay::parallel_for(0, gr[cur[i]].size(), [ & gr, & all_it, &loc_it, & all_neighbours, & i, &cur] (size_t j) {
+                parlay::assign_uninitialized(*(all_it + j), *(loc_it + j));
             });
         });
 
@@ -120,9 +121,8 @@ vector<vector<int>> parallel(const vector<vector<int>>& gr, int n, int z, int y,
             parlay::filter(all_neighbours, [&visited](size_t i) { 
                 bool val = false; 
                 // cout << "i=" << i << ", visited[i]=" << visited[i];
-                bool result = !visited[i] && visited[i].compare_exchange_strong(val, true);
                 // cout << ", result=" << result << '\n';
-                return result; 
+                return !visited[i] && visited[i].compare_exchange_strong(val, true);
             }).to_vector()
         ); 
 
@@ -134,7 +134,7 @@ vector<vector<int>> parallel(const vector<vector<int>>& gr, int n, int z, int y,
     } 
     // cout << "\n";
 
-    cout << "layers amount: " << result.size() << '\n';
+    // cout << "layers amount: " << result.size() << '\n';
     return result;
 }
 
@@ -150,7 +150,7 @@ inline double make_test_sort(
     return time_executed;
 }
 
-inline void launch(
+inline double launch(
     const std::function<vector<vector<int>>(const std::vector<vector<int>> &, int, int, int, int)> &bfs, const std::vector<vector<int>> &gr, const std::string &print, int k, 
     int n, int z, int y, int x
 ) {
@@ -159,6 +159,7 @@ inline void launch(
         mean += make_test_sort(bfs, gr, print, n, z, y, x);
     }
     std::cout << "mean time: " << mean / k << '\n';
+    return mean / k;
 }
 
 
@@ -190,7 +191,8 @@ int main(int, char *argv[]){
     double create_time = t.next_time();
     cout << "Create square time: " << create_time << "\n";
 
-    launch(seq, gr, "sequence algorithm", k, n, 0, 0, 0);
-    cout << "---------------------------------------------------------------------";
-    launch(parallel, gr, "parallel algorithm", k, n, 0, 0, 0);
+    double seq_mean = launch(seq, gr, "sequence algorithm", k, n, 0, 0, 0);
+    double par_mean = launch(parallel, gr, "parallel algorithm", k, n, 0, 0, 0);
+
+    cout << "Increase: " << seq_mean / par_mean;
 }
