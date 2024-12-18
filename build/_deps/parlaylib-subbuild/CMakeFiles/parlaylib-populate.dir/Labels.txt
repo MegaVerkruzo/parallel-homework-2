@@ -1,0 +1,14 @@
+# Target labels
+ parlaylib-populate
+# Source files and their labels
+/home/alexey/00university/07semester/03parallel/02homework/parallel-homework-2/build/_deps/parlaylib-subbuild/CMakeFiles/parlaylib-populate
+/home/alexey/00university/07semester/03parallel/02homework/parallel-homework-2/build/_deps/parlaylib-subbuild/CMakeFiles/parlaylib-populate.rule
+/home/alexey/00university/07semester/03parallel/02homework/parallel-homework-2/build/_deps/parlaylib-subbuild/CMakeFiles/parlaylib-populate-complete.rule
+/home/alexey/00university/07semester/03parallel/02homework/parallel-homework-2/build/_deps/parlaylib-subbuild/parlaylib-populate-prefix/src/parlaylib-populate-stamp/parlaylib-populate-build.rule
+/home/alexey/00university/07semester/03parallel/02homework/parallel-homework-2/build/_deps/parlaylib-subbuild/parlaylib-populate-prefix/src/parlaylib-populate-stamp/parlaylib-populate-configure.rule
+/home/alexey/00university/07semester/03parallel/02homework/parallel-homework-2/build/_deps/parlaylib-subbuild/parlaylib-populate-prefix/src/parlaylib-populate-stamp/parlaylib-populate-download.rule
+/home/alexey/00university/07semester/03parallel/02homework/parallel-homework-2/build/_deps/parlaylib-subbuild/parlaylib-populate-prefix/src/parlaylib-populate-stamp/parlaylib-populate-install.rule
+/home/alexey/00university/07semester/03parallel/02homework/parallel-homework-2/build/_deps/parlaylib-subbuild/parlaylib-populate-prefix/src/parlaylib-populate-stamp/parlaylib-populate-mkdir.rule
+/home/alexey/00university/07semester/03parallel/02homework/parallel-homework-2/build/_deps/parlaylib-subbuild/parlaylib-populate-prefix/src/parlaylib-populate-stamp/parlaylib-populate-patch.rule
+/home/alexey/00university/07semester/03parallel/02homework/parallel-homework-2/build/_deps/parlaylib-subbuild/parlaylib-populate-prefix/src/parlaylib-populate-stamp/parlaylib-populate-test.rule
+/home/alexey/00university/07semester/03parallel/02homework/parallel-homework-2/build/_deps/parlaylib-subbuild/parlaylib-populate-prefix/src/parlaylib-populate-stamp/parlaylib-populate-update.rule
