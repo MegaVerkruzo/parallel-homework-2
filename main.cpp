@@ -96,8 +96,9 @@ vector<vector<int>> parallel(const vector<vector<int>>& gr, int n, int z, int y,
 
     while (!result.back().empty()) { 
 
-        if (result.back().size() < 1000) {
+        if (result.back().size() < 100000) {
             result.push_back(std::move(seq_layer_par(gr, visited, result.back())));
+            continue;
         }
 
         const auto& cur = result.back(); 
