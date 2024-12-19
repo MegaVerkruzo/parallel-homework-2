@@ -59,6 +59,21 @@ vector<int> seq_layer(const vector<vector<int>>& gr, vector<int>& visited, vecto
     return next;
 }
 
+vector<int> seq_layer_par(const vector<vector<int>>& gr, vector<std::atomic_bool>& visited, vector<int>& cur ) {
+    vector<int> next;
+    
+    for (int a : cur) {
+        for (int b : gr[a]) {
+            if (visited[b] == 0) {
+                next.push_back(b);
+                visited[b] = 1;
+            }
+        }
+    }
+
+    return next;
+}
+
 vector<vector<int>> seq(const vector<vector<int>>& gr, int n, int z, int y, int x) {
     int start_num = get_num_cell(n, z, y, x);
     vector<vector<int>> result(1, vector<int>(1, start_num));
@@ -80,8 +95,12 @@ vector<vector<int>> parallel(const vector<vector<int>>& gr, int n, int z, int y,
     vector<vector<int>> result(1, vector<int>(1, start_num));
 
     while (!result.back().empty()) { 
-        const auto& cur = result.back(); 
 
+        if (result.back().size() < 1000) {
+            result.push_back(std::move(seq_layer_par(gr, visited, result.back())));
+        }
+
+        const auto& cur = result.back(); 
         vector<size_t> offsets = parlay::map(cur, [&gr](size_t i) { return gr[i].size(); }).to_vector();
         
         size_t sum_offsets = parlay::scan_inplace(offsets);
@@ -89,18 +108,20 @@ vector<vector<int>> parallel(const vector<vector<int>>& gr, int n, int z, int y,
         vector<int> all_neighbours(sum_offsets);
 
         parlay::parallel_for(0, cur.size(), [& gr, & offsets, & all_neighbours, & cur] (size_t i) {
-            auto all_it = all_neighbours.begin() + offsets[i];
-            auto loc_it = gr[cur[i]].begin();
-            parlay::parallel_for(0, gr[cur[i]].size(), [ & gr, & all_it, &loc_it, & all_neighbours, & i, &cur] (size_t j) {
-                parlay::assign_uninitialized(*(all_it + j), *(loc_it + j));
-            });
+            auto all_it = offsets[i];
+            for (int j = 0; j < gr[cur[i]].size(); j++) {
+                all_neighbours[all_it + j] = gr[cur[i]][j];
+            }
+            // parlay::parallel_for(0, gr[cur[i]].size(), [ & gr, & all_it, &loc_it, & all_neighbours, & i, &cur] (size_t j) {
+            //     parlay::assign_uninitialized(*(all_it + j), *(loc_it + j));
+            // });
         });
 
         result.push_back( 
-            parlay::filter(all_neighbours, [&visited](size_t i) { 
+            std::move(parlay::filter(all_neighbours, [&visited](size_t i) { 
                 bool val = false; 
                 return !visited[i] && visited[i].compare_exchange_strong(val, true);
-            }).to_vector()
+            }).to_vector())
         ); 
     } 
 
@@ -131,7 +152,6 @@ inline double launch(
     return mean / k;
 }
 
-
 int main(int, char *argv[]){
     auto usage = "Usage: 02bfs <n> <k>";
 
@@ -156,7 +176,7 @@ int main(int, char *argv[]){
 
     parlay::internal::timer t("Made");
     t.start();
-    vector<vector<int>> gr = build_square_graph(n);
+    vector<vector<int>> gr = std::move(build_square_graph(n));
     double create_time = t.next_time();
     cout << "Create square time: " << create_time << "\n";
 
