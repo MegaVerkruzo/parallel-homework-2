@@ -96,13 +96,13 @@ vector<vector<int>> parallel(const vector<vector<int>>& gr, int n, int z, int y,
 
     while (!result.back().empty()) { 
 
-        if (result.back().size() < 100000) {
+        if (result.back().size() < 1000) {
             result.push_back(std::move(seq_layer_par(gr, visited, result.back())));
             continue;
         }
 
         const auto& cur = result.back(); 
-        vector<size_t> offsets = parlay::map(cur, [&gr](size_t i) { return gr[i].size(); }).to_vector();
+        vector<size_t> offsets = std::move(parlay::map(cur, [&gr](size_t i) { return gr[i].size(); }).to_vector());
         
         size_t sum_offsets = parlay::scan_inplace(offsets);
 
@@ -113,9 +113,6 @@ vector<vector<int>> parallel(const vector<vector<int>>& gr, int n, int z, int y,
             for (int j = 0; j < gr[cur[i]].size(); j++) {
                 all_neighbours[all_it + j] = gr[cur[i]][j];
             }
-            // parlay::parallel_for(0, gr[cur[i]].size(), [ & gr, & all_it, &loc_it, & all_neighbours, & i, &cur] (size_t j) {
-            //     parlay::assign_uninitialized(*(all_it + j), *(loc_it + j));
-            // });
         });
 
         result.push_back( 
