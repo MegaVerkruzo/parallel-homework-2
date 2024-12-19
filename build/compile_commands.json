@@ -1,8 +1,0 @@
-[
-{
-  "directory": "/home/alexey/00university/07semester/03parallel/02homework/parallel-homework-2/build",
-  "command": "/usr/bin/c++ -DPARLAY_ELASTIC_PARALLELISM=true -I/home/alexey/00university/07semester/03parallel/02homework/parallel-homework-2/build/_deps/parlaylib-src/include -g -o CMakeFiles/02bfs.dir/main.cpp.o -c /home/alexey/00university/07semester/03parallel/02homework/parallel-homework-2/main.cpp",
-  "file": "/home/alexey/00university/07semester/03parallel/02homework/parallel-homework-2/main.cpp",
-  "output": "CMakeFiles/02bfs.dir/main.cpp.o"
-}
-]
