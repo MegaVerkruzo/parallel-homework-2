@@ -1,4 +1,5 @@
 #include <iostream>
+#include <vector>
 #include <atomic>
 
 #include <parlay/internal/get_time.h>
@@ -15,8 +16,8 @@ inline int get_num_cell(int n, int z, int y, int x) {
     return n * n * z + n * y + x;
 }
 
-inline sequence<sequence<int>> build_square_graph(const int n) {
-    sequence<sequence<int>> gr(n * n * n, sequence<int>(0));
+inline vector<vector<int>> build_square_graph(const int n) {
+    vector<vector<int>> gr(n * n * n, vector<int>(0));
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
             for (int k = 0; k < n; k++) {
@@ -43,45 +44,49 @@ inline sequence<sequence<int>> build_square_graph(const int n) {
     return gr;
 }
 
-sequence<sequence<int>> seq(const sequence<sequence<int>>& gr, int n, int z, int y, int x) {
-    int start_num = get_num_cell(n, z, y, x);
-    sequence<sequence<int>> result(1, sequence<int>(1, start_num));
-    sequence<int> visited(n * n * n, 0);
-    visited[start_num] = 1;
-    while (result.back().size() > 0) {
-        const auto& cur = result.back(); 
-        sequence<int> next;
+vector<int> seq_layer(const vector<vector<int>>& gr, vector<int>& visited, vector<int>& cur ) {
+    vector<int> next;
     
-        for (int a : cur) {
-            for (int b : gr[a]) {
-                if (visited[b] == 0) {
-                    next.push_back(b);
-                    visited[b] = 1;
-                }
+    for (int a : cur) {
+        for (int b : gr[a]) {
+            if (visited[b] == 0) {
+                next.push_back(b);
+                visited[b] = 1;
             }
         }
+    }
 
-        result.push_back(next);
+    return next;
+}
+
+vector<vector<int>> seq(const vector<vector<int>>& gr, int n, int z, int y, int x) {
+    int start_num = get_num_cell(n, z, y, x);
+    vector<vector<int>> result(1, vector<int>(1, start_num));
+    vector<int> visited(n * n * n, 0);
+    visited[start_num] = 1;
+    while (result.back().size() > 0) {
+        result.push_back(seq_layer(gr, visited, result.back()));
     }
 
     return result;
 }
 
-sequence<sequence<int>> parallel(const sequence<sequence<int>>& gr, int n, int z, int y, int x) {
-    sequence<std::atomic_bool> visited(gr.size());
+vector<vector<int>> parallel(const vector<vector<int>>& gr, int n, int z, int y, int x) {
+    vector<std::atomic_bool> visited(gr.size());
 
     int start_num = get_num_cell(n, z, y, x);
     visited[start_num] = true;
 
-    sequence<sequence<int>> result(1, sequence<int>(1, start_num));
+    vector<vector<int>> result(1, vector<int>(1, start_num));
 
     while (!result.back().empty()) { 
         const auto& cur = result.back(); 
-        sequence<size_t> offsets = parlay::map(cur, [&gr](size_t i) { return gr[i].size(); });
+
+        vector<size_t> offsets = parlay::map(cur, [&gr](size_t i) { return gr[i].size(); }).to_vector();
         
         size_t sum_offsets = parlay::scan_inplace(offsets);
 
-        sequence<int> all_neighbours(sum_offsets);
+        vector<int> all_neighbours(sum_offsets);
 
         parlay::parallel_for(0, cur.size(), [& gr, & offsets, & all_neighbours, & cur] (size_t i) {
             auto all_it = all_neighbours.begin() + offsets[i];
@@ -95,7 +100,7 @@ sequence<sequence<int>> parallel(const sequence<sequence<int>>& gr, int n, int z
             parlay::filter(all_neighbours, [&visited](size_t i) { 
                 bool val = false; 
                 return !visited[i] && visited[i].compare_exchange_strong(val, true);
-            })
+            }).to_vector()
         ); 
     } 
 
@@ -103,7 +108,7 @@ sequence<sequence<int>> parallel(const sequence<sequence<int>>& gr, int n, int z
 }
 
 inline double make_test_sort(
-    const std::function<sequence<sequence<int>>(const sequence<sequence<int>> &, int, int, int, int)> &bfs, const sequence<sequence<int>> &gr, const std::string &print, 
+    const std::function<vector<vector<int>>(const vector<vector<int>> &, int, int, int, int)> &bfs, const vector<vector<int>> &gr, const std::string &print, 
     int n, int z, int y, int x
 ) {
     parlay::internal::timer t("Made");
@@ -115,7 +120,7 @@ inline double make_test_sort(
 }
 
 inline double launch(
-    const std::function<sequence<sequence<int>>(const sequence<sequence<int>> &, int, int, int, int)> &bfs, const sequence<sequence<int>> &gr, const std::string &print, int k, 
+    const std::function<vector<vector<int>>(const vector<vector<int>> &, int, int, int, int)> &bfs, const vector<vector<int>> &gr, const std::string &print, int k, 
     int n, int z, int y, int x
 ) {
     double mean = 0;
@@ -151,7 +156,7 @@ int main(int, char *argv[]){
 
     parlay::internal::timer t("Made");
     t.start();
-    sequence<sequence<int>> gr = build_square_graph(n);
+    vector<vector<int>> gr = build_square_graph(n);
     double create_time = t.next_time();
     cout << "Create square time: " << create_time << "\n";
 
